@@ -12,24 +12,20 @@ from package.dialog_detection import (post_smth,
                                       mirroring,
                                       mirroring_matrix)
 from itertools import permutations
+from datetime import datetime
 import warnings
 import os
 warnings.filterwarnings('ignore')
 
 
-fpath = './data/3p_1(test).csv'
-# fpath = './data/2p_1(test).csv'
-# fpath = './data/2p_6(test).csv'
-# fpath = './data/2p_7(test_4).csv'
-# fpath = './data/2p_2.csv'
-output_dir = './results/'
-model_name = 'Stacking'
-tt_term = 300
-
 def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     fname = os.path.basename(fpath).split('.')[0]
     file_extension = os.path.basename(fpath).split('.')[1]
-
+    today = datetime.strftime(datetime.today(), format="%Y%m%d")
+    if not os.path.exists(output_dir + '/{}'.format(today) ):
+        os.makedirs(output_dir + '/{}'.format(today))
+    if not os.path.exists(output_dir + '/{}/img'.format(today) ):
+        os.makedirs(output_dir + '/{}/img'.format(today))
     ### Try two type of
     if file_extension == 'csv':
         df = pd.read_csv(fpath)
@@ -75,9 +71,21 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     m_matrix = mirroring_matrix(dialog_len_list, n_person, period=m_term)
 
     # 엑셀 파일 열기 w/ExcelWriter
-    writer = pd.ExcelWriter(output_dir + '/{}.xlsx', engine='xlsxwriter')
+    writer = pd.ExcelWriter(output_dir + '/{}/{}.xlsx'.format(today,fname), engine='xlsxwriter')
     # 시트별 데이터 추가하기
     turn_taking_df.to_excel(writer, sheet_name= 'Count turn taking')
-    short_res_df.to_excel(writer, sheet_name= '두번째시트')
+    short_res_df.to_excel(writer, sheet_name= 'Count short response')
+    tt_and_short.to_excel(writer, sheet_name= 'Short and turn taking')
+    s_breaker_df.to_excel(writer, sheet_name= 'Count silence breaker')
+    m_matrix.to_excel(writer, sheet_name= 'Count mirriring')
+
     # 엑셀 파일 저장하기
     writer.save()
+
+# fpath = './data/2p_1(test).csv'
+# output = './results/20210219/'
+# model_name = 'Stacking'
+# tt_term = 300
+# s_term = 300
+# m_term =200
+# final_excecution(fpath, output, model_name, tt_term, s_term, m_term)

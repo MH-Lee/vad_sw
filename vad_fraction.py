@@ -111,6 +111,9 @@ s_breaker_df = silence_table(sil_breaker, n_person=n_person)
 s_breaker_df
 
 mirroring_matrix(dialog_len_list, n_person, period=m_term)
+from datetime import datetime
+
+today = datetime.today()
 
 # def breaker(df, combi, n_person, howlong = 300):
 #     """

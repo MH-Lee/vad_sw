@@ -2,6 +2,7 @@ import sys
 import pandas as pd
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QCoreApplication
+from package.vad_execution import final_excecution
 
 class MyWindow(QWidget):
 # class MyWindow(QMainWindow):
@@ -192,7 +193,14 @@ class MyWindow(QWidget):
         print("the_number_of_filelist : ", len(self.filename))
         print("person number : ", self.person_mode)
         print("output_dir : ", self.output_dir)
-        
+        for fname in self.filename:
+            final_excecution(fname,\
+                             self.output_dir,\
+                             self.model_name,\
+                             int(self.tt_term),\
+                             int(self.s_term),\
+                             int(self.m_term))
+
 
 
 if __name__ == "__main__":

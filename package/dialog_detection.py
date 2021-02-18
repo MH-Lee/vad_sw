@@ -297,7 +297,7 @@ def silence_breaker(df, combi, n_person, howlong = 300):
         if(comb_silence_values[i,0] == 0):
             pass
         elif(comb_silence_values[i,0] - comb_silence_values[i-1,0] >= 2): #침묵이 깨졌을 떄
-            if(comb_silence_values[i-1,1] <= -howlong): #침묵이 300 이상 진행 되었을 떄,
+            if(comb_silence_values[i-1,1] <= -1 * howlong): #침묵이 300 이상 진행 되었을 떄,
                 break_idx = comb_silence_values[i-1,0] + 1 # 침묵을 깬 사람이 발생한 row의 index
                 til_break_df = df[:break_idx + 1].loc[:,select_columns] # 첫 row 부터 침묵을 깬 row 까지 데이터프레임 슬라이스
                 # 만일 til_break_df 에서 row의 원소들의 총합이 -3이 아닌 경우가 단 하나만 있다면, 해당 break_idx는 밑에서 어팬드 하지 않고 pass

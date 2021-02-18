@@ -11,20 +11,20 @@ from package.vad_filter import  feature_generation
 from package.utils import (normalization,
                            infile_concat,
                            absolute)
+from datetime import datetime
 import pickle
 import os
 import pandas as pd
 
 
 def plot_graph(origin, sm_pred, a=0, b=None, save_dir=None, img_name=None):
+    today = datetime.strftime(datetime.today(), format="%Y%m%d")
     plt.figure(figsize=(40,10))
     plt.plot(origin.loc[a:b], color='tab:red')
     plt.plot(sm_pred.loc[a:b], color='tab:blue')
     plt.legend(['Signal', 'Predict'])
     if save_dir is not None:
-        if not os.path.exists(save_dir + '/img'):
-            os.makedirs(save_dir + '/img')
-        plt.savefig(save_dir + '/img/' + img_name)
+        plt.savefig(save_dir + '/{}/img/{}.jpg'.format(today, img_name))
     else:
         plt.show()
 
