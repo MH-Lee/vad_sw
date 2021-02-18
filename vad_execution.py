@@ -5,7 +5,12 @@ from package.dialog_detection import (post_smth,
                                       detect_talk_break_length,
                                       get_start_end_times,
                                       count_turn_takes,
-                                      make_turn_taking_df)
+                                      make_turn_taking_df,
+                                      combi_suspect,
+                                      silence_breaker,
+                                      silence_table,
+                                      mirroring,
+                                      mirroring_matrix)
 from itertools import permutations
 import warnings
 import os
@@ -21,7 +26,7 @@ output_dir = './results/'
 model_name = 'Stacking'
 tt_term = 300
 
-def final_excecution(fpath, output_dir, model_name, tt_term):
+def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     fname = os.path.basename(fpath).split('.')[0]
     file_extension = os.path.basename(fpath).split('.')[1]
 
@@ -60,3 +65,19 @@ def final_excecution(fpath, output_dir, model_name, tt_term):
     turn_taking_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='turn_taking')
     short_res_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='short_res')
     tt_and_short = turn_taking_df + short_res_df
+
+    ### silece detect
+    combi = combi_suspect(only_talk, n_person=n_person)
+    sil_breaker = silence_breaker(only_talk, combi, n_person=n_person, howlong=s_term)
+    s_breaker_df = silence_table(sil_breaker, n_person=n_person)
+
+    ### mirroring_detection
+    m_matrix = mirroring_matrix(dialog_len_list, n_person, period=m_term)
+
+    # 엑셀 파일 열기 w/ExcelWriter
+    writer = pd.ExcelWriter(output_dir + '/{}.xlsx', engine='xlsxwriter')
+    # 시트별 데이터 추가하기
+    turn_taking_df.to_excel(writer, sheet_name= 'Count turn taking')
+    short_res_df.to_excel(writer, sheet_name= '두번째시트')
+    # 엑셀 파일 저장하기
+    writer.save()

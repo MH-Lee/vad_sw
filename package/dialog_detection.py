@@ -1,7 +1,7 @@
 import pandas as pd
 import itertools
+from itertools import permutations, chain
 from collections import Counter
-from itertools import permutations
 import numpy as np
 
 
@@ -233,3 +233,144 @@ def make_turn_taking_df(only_talk, dialog_len_list, n_person, mode='turn_taking'
     return df
 
 ##### Silence Check
+def combi_suspect(df, n_person):
+    """
+    input: df = pd.read_csv('3_true_for_check.csv') 와 같이 원본 데이터 프레임을 넣는다.
+    output:
+
+        - creating a two-columned dataframe
+        - 1st column : a row corresponding to the index of p1&p2&p3, being silent
+            - each row of the 1st column value is -1, meaning silence
+            - 1st column consists of original index of the Scenario file
+        - 2nd column :
+            - continuously adding -1 as the line goes by
+            - stop accumulating -1 when the index jumps more than 2 steps
+            - it means there is a silence breaker
+    """
+    silent_times = []
+    df_sum_row = df.sum(axis=1)
+    for i in range(len(df)):
+        if (df_sum_row[i]) == -1* int(n_person):  ### 총합이 -3일때 침묵인 상황
+            silent_times.append(i)        ### -1-1-1 침묵인 row 인덱스를 어팬드
+
+    pd_silence = pd.DataFrame(silent_times.copy())
+    pd_silence.columns = ['idx']
+    pd_silence
+
+    # silence 옆에 추가할, -1 accumulation 한 column 생성
+    acc = []
+    total = 0
+    silence = 0
+
+    for idx, value in enumerate(pd_silence.iloc[:,0]):
+        total += silence
+        if(value == 0): #첫 행의 경우 -1-1-1 침묵일 경우임에 확실.
+            silence = -1
+            acc.append(silence)
+        elif(pd_silence.iloc[idx, 0] - pd_silence.iloc[idx-1, 0] >= 2):
+            silence = -1
+            acc.append(silence)
+        elif(pd_silence.iloc[idx, 0] - pd_silence.iloc[idx-1, 0] < 2):
+            silence += -1
+            acc.append(silence)
+
+    acc_silence = pd.DataFrame(acc.copy())
+    acc_silence.columns = ['acc_idx']
+    comb_silence = pd.concat([pd_silence, acc_silence], axis = 1)
+    return comb_silence
+
+def silence_breaker(df, combi, n_person, howlong = 300):
+    """
+    - combi : the result value of combi_suspect function
+    - howlong : the time period during silence
+
+    - returns person indices who breaks a silence
+    - person index : person1 --> 0, person2 --> 1, person3 -->2
+
+    """
+    comb_silence_values = combi.values
+    who_talk = []
+    #value_who_talk = []
+    acc = []
+    select_columns = ['talk{}'.format(i) for i in range(1, n_person+1)]
+    for i, value in enumerate(comb_silence_values):
+        if(comb_silence_values[i,0] == 0):
+            pass
+        elif(comb_silence_values[i,0] - comb_silence_values[i-1,0] >= 2): #침묵이 깨졌을 떄
+            if(comb_silence_values[i-1,1] <= -howlong): #침묵이 300 이상 진행 되었을 떄,
+                break_idx = comb_silence_values[i-1,0] + 1 # 침묵을 깬 사람이 발생한 row의 index
+                til_break_df = df[:break_idx + 1].loc[:,select_columns] # 첫 row 부터 침묵을 깬 row 까지 데이터프레임 슬라이스
+                # 만일 til_break_df 에서 row의 원소들의 총합이 -3이 아닌 경우가 단 하나만 있다면, 해당 break_idx는 밑에서 어팬드 하지 않고 pass
+                til_break_df['sum'] = til_break_df.sum( axis = 1)
+
+
+                # 가장 처음 발생한 breaker는 silence breaker가 아니라, 단순히 처음 대화를 시작한 경우일 뿐이므로 제외
+                if len(np.where(til_break_df['sum'] != -3)[0]) >= 2:
+                    acc.append(break_idx) # 침묵이 300 이상 진행 되었을때, 그것이 깨진 행을 append한다.
+
+    for ii, vv in enumerate(acc):
+        ## ex. [-1, 1, 1] 중에서 1,1에 대응되는 person을 구해라
+        # t = [df['talk1'][vv],df['talk2'][vv], df['talk3'][vv]]
+        t = list()
+        for c in select_columns:
+            t.append(df[c][vv])
+        tt = [i for i in range(len(t)) if t[i] == 1.0]
+        who_talk.append(tt)
+    return who_talk
+
+def silence_table(whois, n_person):
+    """
+    - input : 아래 두 함수의 결과 --> breaker(combi_suspect(df), 400) 를 input으로 함
+    - output: person 별로 침묵을 깬 횟수 카운팅
+
+    creating a final table for silence breaker
+    """
+    z = list(chain(*whois))
+    if z == []:
+        return pd.DataFrame()
+    df = pd.DataFrame.from_dict(Counter(z), orient='index').reset_index()
+    df.columns = ['person', 'interruption']
+    df.sort_values(by='person', ascending=True, inplace = True)
+    df_final = df.copy()
+    for p in range(n_person):
+        df_final.loc[:, 'person'].replace(p, 'person{}'.format(p+1), inplace = True)
+    return df_final.reset_index(drop=True)
+
+#### mirroring dialog_detection
+def mirroring(host1, guest1, period = 350):
+    """
+    - 아래 mirroring_matrix 의 내장 함수로 쓰임
+    - input : detect_talk_break_length 의 결과값 중 두 개만 pair로 들어감 : 첫 번째로 들어가는 결과값이 host1, 그 다음에 들어가는 결과값이 guest1
+    - output : host1의 음성구간 동안 guest1 의 미러링 횟수를 카운팅
+
+    """
+
+
+    mirror2 = 0
+    for i in range(len(get_start_end_times(host1, guest1)[0])):# 호스트 기준으로만 미러링을 센다
+        for k in range(len(get_start_end_times(host1, guest1)[1])):
+            # host의 시작점 보다 guest의 시작점 index가 커야함 & host 의 끝점보다 guest의 시작점 index가 작아야함
+            if (get_start_end_times(host1, guest1)[0][i][0] < get_start_end_times(host1, guest1)[1][k][0]) and (get_start_end_times(host1, guest1)[0][i][1] > get_start_end_times(host1, guest1)[1][k][0]):
+                # host의 시작점보다 guset의 끝점 index가 커야함  & host의 끝점보다 guest의 끝점 index가 작아야함
+                if (get_start_end_times(host1, guest1)[0][i][0] < get_start_end_times(host1, guest1)[1][k][1]) and (get_start_end_times(host1, guest1)[0][i][1] > get_start_end_times(host1, guest1)[1][k][1]):
+                    if get_start_end_times(host1, guest1)[1][k][1] - get_start_end_times(host1, guest1)[1][k][0] <= period:
+                        mirror2 += 1
+    return mirror2
+
+# 포루프 돌려야 할 대상 : dialog_len1, dialog_len2, dialog_len3
+def mirroring_matrix(dialog_len_list, n_person, period = 350):
+    """
+    input : detect_talk_break_length 결과를 talk1 talk2 talk3 순서 대로 넣어준다.
+    output : mirroring 횟수를 나타내는 데이터프레임 출력
+
+    """
+    new_columns = ['to_p{}'.format(i) for i in range(1, n_person+1)]
+    np_data = np.zeros((n_person, n_person))
+    for idx, pm in enumerate(permutations(range(0, n_person), 2)):
+        # print(pm)
+        # print(pm[0]+1, "->", pm[1]+1)
+        np_data[pm] = mirroring(dialog_len_list[pm[0]],\
+                                dialog_len_list[pm[1]],\
+                                period)
+    mirroring_df =pd.DataFrame(np_data, columns=new_columns, index=new_columns)
+    return mirroring_df
