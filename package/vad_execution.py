@@ -22,10 +22,11 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     fname = os.path.basename(fpath).split('.')[0]
     file_extension = os.path.basename(fpath).split('.')[1]
     today = datetime.strftime(datetime.today(), format="%Y%m%d")
-    if not os.path.exists(output_dir + '/{}'.format(today) ):
-        os.makedirs(output_dir + '/{}'.format(today))
-    if not os.path.exists(output_dir + '/{}/img'.format(today) ):
-        os.makedirs(output_dir + '/{}/img'.format(today))
+    subdir_name = '/{}_{}({}_{}_{})'.format(today, model_name, tt_term, s_term, m_term)
+    if not os.path.exists(output_dir +  subdir_name):
+        os.makedirs(output_dir + subdir_name)
+    if not os.path.exists(output_dir + '/{}/img'.format(subdir_name) ):
+        os.makedirs(output_dir + '/{}/img'.format(subdir_name))
     ### Try two type of
     if file_extension == 'csv':
         df = pd.read_csv(fpath)

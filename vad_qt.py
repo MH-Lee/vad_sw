@@ -1,8 +1,9 @@
 import sys
 import os
 import pandas as pd
+import numpy as np
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt, QCoreApplication
+from PyQt5.QtCore import Qt, QCoreApplication, QBasicTimer, QProcess
 from package.vad_execution import final_excecution
 
 class VadSW(QWidget):
@@ -34,8 +35,7 @@ class VadSW(QWidget):
         ### Execution button
         self.execButton = QPushButton("Execution")
         self.execButton.clicked.connect(self.exeClicked)
-        ### Progress bar
-        self.pbar = QProgressBar(self)
+        ### Completed msg
         self.completed_msg = QLabel("", self)
         self.completed_msg.setStyleSheet("color:red;")
         self.completed_msg.setAlignment(Qt.AlignCenter)
@@ -53,7 +53,6 @@ class VadSW(QWidget):
         layout.addWidget(self.outputButton, 6, 0)
         layout.addWidget(self.outputDirName, 7, 0)
         layout.addWidget(self.execButton, 8, 0)
-        # layout.addWidget(self.pbar, 9, 0)
         layout.addWidget(self.completed_msg, 9, 0)
         layout.addWidget(self.QuitButton, 10, 0)
 
@@ -193,6 +192,7 @@ class VadSW(QWidget):
                              int(self.s_term),\
                              int(self.m_term))
         self.completed_msg.setText("Completed! Done")
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
