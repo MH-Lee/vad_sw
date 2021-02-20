@@ -1,10 +1,11 @@
 import sys
+import os
 import pandas as pd
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import QCoreApplication
+from PyQt5.QtCore import Qt, QCoreApplication
 from package.vad_execution import final_excecution
 
-class MyWindow(QWidget):
+class VadSW(QWidget):
 # class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -20,16 +21,24 @@ class MyWindow(QWidget):
         self.pushButton.clicked.connect(self.pushButtonClicked)
         ### Qlabel for model
         self.label_model = QLabel()
+        self.label_model.setAlignment(Qt.AlignCenter)
         ### Qlabel for # of filename
         self.NofFileName = QLabel()
+        self.NofFileName.setAlignment(Qt.AlignCenter)
         ### Output dir
         self.outputButton = QPushButton("Output dir")
         self.outputButton.clicked.connect(self.outputButtonClicked)
         ### Qlabel for set output dir
         self.outputDirName = QLabel()
+        self.outputDirName.setAlignment(Qt.AlignCenter)
         ### Execution button
         self.execButton = QPushButton("Execution")
         self.execButton.clicked.connect(self.exeClicked)
+        ### Progress bar
+        self.pbar = QProgressBar(self)
+        self.completed_msg = QLabel("", self)
+        self.completed_msg.setStyleSheet("color:red;")
+        self.completed_msg.setAlignment(Qt.AlignCenter)
         ### Quit Button
         self.QuitButton = QPushButton("Quit")
         self.QuitButton.clicked.connect(QCoreApplication.instance().quit)
@@ -41,14 +50,15 @@ class MyWindow(QWidget):
         layout.addWidget(self.ModelSelectGroup(), 3, 0)
         layout.addWidget(self.label_model, 4, 0)
         layout.addWidget(self.turnTakingGroup(), 5, 0)
-        # layout.addWidget(self.theNumberOfPeople(), 6, 0)
         layout.addWidget(self.outputButton, 6, 0)
         layout.addWidget(self.outputDirName, 7, 0)
         layout.addWidget(self.execButton, 8, 0)
-        layout.addWidget(self.QuitButton, 9, 0)
+        # layout.addWidget(self.pbar, 9, 0)
+        layout.addWidget(self.completed_msg, 9, 0)
+        layout.addWidget(self.QuitButton, 10, 0)
 
         self.setLayout(layout)
-        self.setGeometry(800, 200, 400, 300)
+        self.setGeometry(900, 200, 400, 300)
         self.setWindowTitle("VAD sw v0.5")
         self.show()
 
@@ -62,7 +72,7 @@ class MyWindow(QWidget):
         self.dir_label.setText("\n".join(print_fname))
         self.filename = fname[0]
         self.NofFileName.setText("{} data selected".format(len(fname[0])))
-        # print(fname)
+        self.completed_msg.clear()
 
     ### set output directory
     def outputButtonClicked(self):
@@ -123,29 +133,6 @@ class MyWindow(QWidget):
         self.model_name = model_name
         # print("model_name : ", self.model_name)
 
-    # def theNumberOfPeople(self):
-    #     groupbox = QGroupBox('The number of people involved in the conversation')
-    #     self.radio_p2 = QRadioButton('2-person conversation')
-    #     self.radio_p2.clicked.connect(self.PersonRadioButtonClicked)
-    #     self.radio_p3 = QRadioButton('3-person conversation')
-    #     self.radio_p3.clicked.connect(self.PersonRadioButtonClicked)
-    #     self.radio_p3.setChecked(True)
-    #
-    #     hbox = QHBoxLayout()
-    #     hbox.addWidget(self.radio_p2)
-    #     hbox.addWidget(self.radio_p3)
-    #     groupbox.setLayout(hbox)
-    #     return groupbox
-    #
-    # def PersonRadioButtonClicked(self):
-    #     person_mode = 0
-    #     if self.radio_p2.isChecked():
-    #         person_mode = 2
-    #     else:
-    #         person_mode = 3
-    #     self.person_mode = person_mode
-    #     # print("person_mode : ", self.person_mode)
-
     def turnTakingGroup(self):
         groupbox = QGroupBox('Turn taking parameter')
         ### input turn taking term
@@ -185,6 +172,11 @@ class MyWindow(QWidget):
             self.m_term = 300
         else:
             self.m_term = self.mirroring_input.text()
+        if self.output_dir == None:
+            cur_dir = os.getcwd()
+            if not os.path.exists(cur_dir+'/results'):
+                os.makedirs(cur_dir+'/results')
+            self.output_dir = cur_dir+'/results'
         print("tt_term : ", self.tt_term)
         print("s_term : ", self.s_term)
         print("m_term : ", self.m_term)
@@ -193,18 +185,17 @@ class MyWindow(QWidget):
         print("the_number_of_filelist : ", len(self.filename))
         print("person number : ", self.person_mode)
         print("output_dir : ", self.output_dir)
-        for fname in self.filename:
+        for idx, fname in enumerate(self.filename):
             final_excecution(fname,\
                              self.output_dir,\
                              self.model_name,\
                              int(self.tt_term),\
                              int(self.s_term),\
                              int(self.m_term))
-
-
+        self.completed_msg.setText("Completed! Done")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = MyWindow()
-    window.show()
+    vadsw = VadSW()
+    vadsw.show()
     app.exec_()
