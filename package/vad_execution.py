@@ -39,7 +39,7 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     df = df[df_columns]
     df.columns = df_new_columns
     ### predict vad
-    pred_df_concat = vad_predict(df, output_dir, \
+    pred_df_concat = vad_predict(df, output_dir + '/' + subdir_name, \
                                 n_person=n_person, \
                                 img_name=fname,
                                 model_name=model_name)
@@ -72,7 +72,7 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     m_matrix = mirroring_matrix(dialog_len_list, n_person, period=m_term)
 
     # 엑셀 파일 열기 w/ExcelWriter
-    writer = pd.ExcelWriter(output_dir + '/{}/{}.xlsx'.format(today,fname), engine='xlsxwriter')
+    writer = pd.ExcelWriter(output_dir + '/{}/{}.xlsx'.format(subdir_name,fname), engine='xlsxwriter')
     # 시트별 데이터 추가하기
     turn_taking_df.to_excel(writer, sheet_name= 'Count turn taking')
     short_res_df.to_excel(writer, sheet_name= 'Count short response')

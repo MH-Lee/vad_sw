@@ -18,13 +18,12 @@ import pandas as pd
 
 
 def plot_graph(origin, sm_pred, a=0, b=None, save_dir=None, img_name=None):
-    today = datetime.strftime(datetime.today(), format="%Y%m%d")
     plt.figure(figsize=(40,10))
     plt.plot(origin.loc[a:b], color='tab:red')
     plt.plot(sm_pred.loc[a:b], color='tab:blue')
     plt.legend(['Signal', 'Predict'])
     if save_dir is not None:
-        plt.savefig(save_dir + '/{}/img/{}.jpg'.format(today, img_name))
+        plt.savefig(save_dir + '/img/{}.jpg'.format(img_name))
     else:
         plt.show()
 
