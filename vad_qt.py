@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt, QCoreApplication, QBasicTimer, QProcess
 from package.vad_execution import final_excecution
 
+
 class VadSW(QWidget):
 # class MyWindow(QMainWindow):
     def __init__(self):

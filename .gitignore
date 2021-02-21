@@ -4,3 +4,8 @@ __pycache__/
 vad_venv/
 .DS_Store
 results/
+etc/
+dist/
+build/
+data/
+*.spec
