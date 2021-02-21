@@ -33,15 +33,6 @@ def gradient_boosting(test_x):
     grb_origin = pd.DataFrame(grb_pred[:,1]).reset_index(drop=True)
     return grb_sm_pred, grb_origin
 
-def lightGBM(test_x) :
-    filename = cur_dir + '/models/lgb_clf_vad.pkl'
-    lgb_clf = pickle.load(open(filename, 'rb'))
-    lgb_pred = lgb_clf.predict_proba(test_x)
-    lgb_sm_pred = smoothing(lgb_pred[:,1])
-    lgb_origin = pd.DataFrame(lgb_pred[:,1]).reset_index(drop=True)
-    return lgb_sm_pred, lgb_origin
-
-
 def voting_classifier(test_x):
     filename = cur_dir + '/models/voting_clf_vad.pkl'
     voting_clf = pickle.load(open(filename, 'rb'))
@@ -49,7 +40,6 @@ def voting_classifier(test_x):
     voting_sm_pred = smoothing(voting_pred[:,1])
     voting_origin = pd.DataFrame(voting_pred[:,1]).reset_index(drop=True)
     return voting_sm_pred, voting_origin
-
 
 def stacking_classifier(true_x):
     filename = cur_dir + '/models/stacking_clf_vad.pkl'

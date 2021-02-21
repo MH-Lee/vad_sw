@@ -5,8 +5,7 @@ from package.clf import (logistic_regression,
                          neural_network,
                          gradient_boosting,
                          stacking_classifier,
-                         voting_classifier,
-                         lightGBM)
+                         voting_classifier)
 from package.vad_filter import  feature_generation
 from package.utils import (normalization,
                            infile_concat,
@@ -44,8 +43,6 @@ def predict_result(test_x, model_name='lr'):
         sm_pred, origin = neural_network(test_x)
     elif model_name == 'grb':
         sm_pred, origin = gradient_boosting(test_x)
-    elif model_name == 'lightgbm':
-        sm_pred, origin = lightGBM(test_x)
     elif model_name == 'voting':
         sm_pred, origin = voting_classifier(test_x)
     elif model_name == 'stacking':

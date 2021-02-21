@@ -97,12 +97,10 @@ class VadSW(QWidget):
         self.radio2.clicked.connect(self.radioButtonClicked)
         self.radio3 = QRadioButton('GradientBoosting')
         self.radio3.clicked.connect(self.radioButtonClicked)
-        self.radio4 = QRadioButton('LightGBM')
+        self.radio4 = QRadioButton('VotingClassifier')
         self.radio4.clicked.connect(self.radioButtonClicked)
-        self.radio5 = QRadioButton('VotingClassifier')
+        self.radio5 = QRadioButton('StackingClassifier')
         self.radio5.clicked.connect(self.radioButtonClicked)
-        self.radio6 = QRadioButton('StackingClassifier')
-        self.radio6.clicked.connect(self.radioButtonClicked)
         self.radio1.setChecked(True)
 
         vbox = QVBoxLayout()
@@ -111,7 +109,6 @@ class VadSW(QWidget):
         vbox.addWidget(self.radio3)
         vbox.addWidget(self.radio4)
         vbox.addWidget(self.radio5)
-        vbox.addWidget(self.radio6)
         groupbox.setLayout(vbox)
         return groupbox
 
@@ -124,8 +121,6 @@ class VadSW(QWidget):
         elif self.radio3.isChecked():
             model_name = "GBC"
         elif self.radio4.isChecked():
-            model_name = "lightGBM"
-        elif self.radio5.isChecked():
             model_name = "Voting"
         else:
             model_name = "Stacking"
