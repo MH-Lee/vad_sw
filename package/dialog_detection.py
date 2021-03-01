@@ -150,43 +150,32 @@ def count_turn_takes(only_talk, host_number, guest_number, host_start_end, guest
     ######
     for i in range(len(host_start_end)):
         k = 0    #i 는 host의 인덱스, k는 guest의 인덱스
-
         while k<=len(guest_start_end)-1 and guest_start_end[k][0] < host_start_end[i][1]:   #k +=1 결과가 len(guest_start_end)보다는 작거나 같아야 한다.  AND guest 의 시작점이 host의 끝점 인덱스보다 작은 경우에는 k에 +1 을 하여, guest_start_end 결과의 그 다음 인덱스로 넘어가도록 한다.
             k += 1   # i를 돌면서 k를 업데이트, 각 i 별로 +1 / guest 의 시작점이 host의 끝점 인덱스보다 작은 경우에 +1 을 하여 다음 인덱스로 넘어간다.
 
         #print(i, k,host_start_end[i], guest_start_end[k])
         if k<=len(guest_start_end)-1 and guest_start_end[k][0] -host_start_end[i][1] <= 300 and  guest_start_end[k][0] -host_start_end[i][1] > 0: # 디폴트: 300 이내에 말 해야함 AND guest 의 시작점이 host의 끝점 인덱스보다 커야함
-
             ## host 가 말하는 중에는 guest가 침묵하고 있어야함. 다만, total 500 정도 말한 것은, 호응/미러링일 수 있으므로, 이 경우는 턴테이킹
             if dup(only_talk.iloc[int(host_start_end[i][0]): int(host_start_end[i][1])+1, guest_number]) <= 500:
-
                 ## guest 가 말하는 중에는 host가 침묵하고 있어야함. 다만, total 500 정도 말한 것은, 미러링일 수 있으므로, 턴테이킹으로 분류
                 if dup(only_talk.iloc[int(guest_start_end[k][0]): int(guest_start_end[k][1])+1, host_number]) <= 500:
-
                     ### host의 말길이도 300 이상이어야함
                     if host_start_end[i][1] - host_start_end[i][0] > 300:
-
-
                         if guest_talk_times1[k] <= howlong:
                             short_responses += 1
                             change.append(k)
-
                             ## idx 및 데이터프레임을 출력할 수 있어야함. 딕셔너리 형태로
                             ## {'A -> B', start, end}
                             ## k 전의 host의 말의 끝 index도 알면 좋겠다. --> i 번째 말의 끝점 인덱스 반환 (표에는 이 인덱스 기준으로 어팬드)
                             ## k: guest의 말의 시작 --> k 의 인덱스를 반환
-
                             values2 = [guest_start_end[k][0]]
                             zipped2 = zip(columns2, values2)
                             a_dictionary2 = dict(zipped2)
                             response_matrix = pd.DataFrame(response_matrix).append(a_dictionary2, True)
-
                             ####
-
                         else:
                             total_responses += 1
                             change.append(k)
-
                             ## idx 및 데이터프레임을 출력할 수 있어야함. 딕셔너리 형태로
                             ## k: guest의 말의 시작 -->  k의 인덱스를 반환
                             ## guest 의 말의 끝점 인덱스도 반환
@@ -195,7 +184,6 @@ def count_turn_takes(only_talk, host_number, guest_number, host_start_end, guest
                             a_dictionary = dict(zipped)
                             turn_taking_matrix = pd.DataFrame(turn_taking_matrix).append(a_dictionary, True)
                             ####
-
     return total_responses, short_responses, turn_taking_matrix, response_matrix
 
 
@@ -279,25 +267,29 @@ def combi_suspect(df, n_person):
     comb_silence = pd.concat([pd_silence, acc_silence], axis = 1)
     return comb_silence
 
-def silence_breaker(df, combi, n_person, howlong = 300):
+def silence_breaker(df, combi, n_person, s_term=300):
     """
     - combi : the result value of combi_suspect function
-    - howlong : the time period during silence
+    - s_term : the time period during silence
 
     - returns person indices who breaks a silence
     - person index : person1 --> 0, person2 --> 1, person3 -->2
 
     """
     comb_silence_values = combi.values
-    who_talk = []
-    #value_who_talk = []
-    acc = []
+
+    after_silence_person = []
+    before_silence_person =[]
+
+    after_silence = []
+    before_silence = []
+
     select_columns = ['talk{}'.format(i) for i in range(1, n_person+1)]
     for i, value in enumerate(comb_silence_values):
         if(comb_silence_values[i,0] == 0):
             pass
         elif(comb_silence_values[i,0] - comb_silence_values[i-1,0] >= 2): #침묵이 깨졌을 떄
-            if(comb_silence_values[i-1,1] <= -1 * howlong): #침묵이 300 이상 진행 되었을 떄,
+            if(comb_silence_values[i-1,1] <= -1 * s_term): #침묵이 300 이상 진행 되었을 떄,
                 break_idx = comb_silence_values[i-1,0] + 1 # 침묵을 깬 사람이 발생한 row의 index
                 til_break_df = df[:break_idx + 1].loc[:,select_columns] # 첫 row 부터 침묵을 깬 row 까지 데이터프레임 슬라이스
                 # 만일 til_break_df 에서 row의 원소들의 총합이 -3이 아닌 경우가 단 하나만 있다면, 해당 break_idx는 밑에서 어팬드 하지 않고 pass
@@ -305,18 +297,40 @@ def silence_breaker(df, combi, n_person, howlong = 300):
 
 
                 # 가장 처음 발생한 breaker는 silence breaker가 아니라, 단순히 처음 대화를 시작한 경우일 뿐이므로 제외
-                if len(np.where(til_break_df['sum'] != -3)[0]) >= 2:
-                    acc.append(break_idx) # 침묵이 300 이상 진행 되었을때, 그것이 깨진 행을 append한다.
-
-    for ii, vv in enumerate(acc):
-        ## ex. [-1, 1, 1] 중에서 1,1에 대응되는 person을 구해라
-        # t = [df['talk1'][vv],df['talk2'][vv], df['talk3'][vv]]
-        t = list()
+                if len(np.where(til_break_df['sum'] != -1*int(n_person))[0]) >= 2:
+                    after_silence.append(break_idx) # 침묵이 300 이상 진행 되었을때, 그것이 깨진 행을 append한다.
+                    ###########추가한 부분#############################
+                    acc_idx = abs(comb_silence_values[i-1,1] + 1)
+                    real_idx = comb_silence_values[i-1,0] - acc_idx - 1
+                    print()
+                    before_silence.append(real_idx)
+                    ###################################################
+    ############추가
+    print(len(after_silence))
+    # 침묵 직후에 누가 말했나?
+    for vv in after_silence:
+        row = list()
         for c in select_columns:
-            t.append(df[c][vv])
-        tt = [i for i in range(len(t)) if t[i] == 1.0]
-        who_talk.append(tt)
-    return who_talk
+            row.append(df[c][vv])
+        row1 = [ias for ias, r in enumerate(row) if r == 1.0]
+        row1_value = int(str(row1)[1:-1])
+        after_silence_person.append([vv,row1_value]) #### [breaker 인덱스, breaker person]
+
+    ############추가
+    # 침묵 직전에 누가 말했나?
+    print(len(before_silence))
+    if len(before_silence) == 0:
+        before_silence_person = []
+    else:
+        for j in before_silence:
+            # row = [df['talk1'][j],df['talk2'][j], df['talk3'][j]]  #
+            row_s = list()
+            for c in select_columns:
+                row_s.append(df[c][j])
+            row_s1 = [ibs for ibs, rs in enumerate(row) if rs == 1.0]
+            row_s1_value = int(str(row_s1)[1:-1])
+            before_silence_person.append([j, row_s1_value]) ### [before silence 인덱스, person]
+    return before_silence_person, after_silence_person
 
 def silence_table(whois, n_person):
     """
@@ -325,9 +339,11 @@ def silence_table(whois, n_person):
 
     creating a final table for silence breaker
     """
-    z = list(chain(*whois))
-    if z == []:
+    # z = list(chain(*whois))
+    if len(whois[1]) == 0:
         return pd.DataFrame()
+    else:
+        z = list(np.array(whois[1])[:,1])
     df = pd.DataFrame.from_dict(Counter(z), orient='index').reset_index()
     df.columns = ['person', 'interruption']
     df.sort_values(by='person', ascending=True, inplace = True)
@@ -336,16 +352,139 @@ def silence_table(whois, n_person):
         df_final.loc[:, 'person'].replace(p, 'person{}'.format(p+1), inplace = True)
     return df_final.reset_index(drop=True)
 
+#### add
+def compare1(x):
+    """
+    - 밑의 table_before 함수의 함수로 쓰임
+    """
+    if x == 0:
+        return '1->silence'
+    elif x ==1:
+        return '2->silence'
+    else:
+        return '3->silence'
+
+def compare2(x):
+    """
+     - 밑의 table_after 함수의 함수로 쓰임
+    """
+    if x == 0:
+        return 'silence->1'
+    elif x ==1:
+        return 'silence->2'
+    else:
+        return 'silence->3'
+
+def table_before(breaker_result):
+    """
+    - input : breaker함수의 결과값. ex. breaker(combi_suspect(df), 400)
+    - output : 컬럼이 2개인 데이터프레임 반환
+        - 1번째 열: silence 직전에 말했을 때의 인덱스
+        - 2번째 열: silence 직전에 말한 사람
+    """
+    if len(breaker_result[0]) == 0:
+        before_s = pd.DataFrame()
+    else:
+        before_s = pd.DataFrame(breaker_result[0])
+        before_s.columns = ['order', 'person']
+        add = before_s['person'].apply(compare1)
+        before_s = pd.concat([before_s['order'], add], axis = 1)
+    return before_s
+
+def table_after(breaker_result):
+    """
+    - input : breaker함수의 결과값. ex. breaker(combi_suspect(df), 400)
+    - output : 컬럼이 2개인 데이터프레임 반환
+        - 1번째 열: silence 직후에 말했을 때의 인덱스
+        - 2번째 열: silence 직후에 말한 사람
+    """
+    if len(breaker_result[1]) == 0:
+        after_s = pd.DataFrame()
+    else:
+        after_s = pd.DataFrame(breaker_result[1])
+        after_s.columns = ['order', 'person']
+        add = after_s['person'].apply(compare2)
+        after_s = pd.concat([after_s['order'], add], axis = 1)
+    return after_s
+
+### turn_taking matrix
+def add_label(turn_matrix):
+    """
+    - 아래 dict_to_df 함수의 내장 함수
+    - input : total_turn의 각 dataframe
+    - output : total_turn의 각 dataframe마다 p1->p2, p3->p1 과 같은 정보를 컬럼으로 추가한 것을 반환
+    """
+    if len(turn_matrix.columns) == 1:
+        turn_matrix['person'] = str(turn_matrix.columns)[8:18]
+        turn_matrix[:]
+    return turn_matrix[:]
+
+def dict_to_df(total):
+    """
+    - input : total_turn (turn_taking이 어떤 인덱스에서 일어났는지, 누가 일으켰는지에 대한 정보를 담은 데이터프레임)
+    - output :
+        total_turn의 각dataframe별로 p1->p2, p2->p3과 같은 정보를 컬럼으로 추가함
+    """
+    total_turn2 = []
+    # dict --> dataframe으로 바꾼다.
+    for i in total:
+        if type(i) == dict:
+            i = pd.DataFrame(i)
+            total_turn2.append(i)
+        else:
+            total_turn2.append(i)
+
+    # total의 각 요소(데이터프레임)에 컬럼을 추가한다.
+    for k in total_turn2:
+        add_label(k)
+        total = total_turn2[:]
+
+    if len(total[0].columns) == 2:
+        for j in total:
+            j.columns = ['order', 'person']
+    return total
+
+def turn_sequence(turn,before, after):
+    """
+    - input : 순서대로 --> total_turn, before_table 함수 결과, after_table 함수 결과
+
+    - output :
+        - p1-> p2과 같은 정보를 담은 컬럼이 추가된 total_turn의 각 데이터 프레임을 아래로 모두 컨켓.
+        - 위의 데이터프레임에서 index를 뜻하는 첫 번째 컬럼을 기준으로 sorting
+    """
+    concat = []
+    for i, v in enumerate(dict_to_df(turn)):
+        concat.append(dict_to_df(turn)[i])
+
+    turn_taking = pd.concat(concat, axis = 0).reset_index(drop = True)
+    total = pd.concat([turn_taking, after, before], axis = 0)
+    total_sort = total.sort_values('order')
+    return total_sort.reset_index(drop = True)
+
+def short_sequence(short):
+    """
+    - input : total_response 함수 결과
+    - output :
+        - p1-> p2과 같은 정보를 담은 컬럼이 추가된 input 각 데이터 프레임을 아래로 모두 컨켓.
+        - 위의 데이터프레임에서 index를 뜻하는 첫 번째 컬럼을 기준으로 sorting
+    """
+    concat2 = []
+    for i, v in enumerate(dict_to_df(short)):
+        concat2.append(dict_to_df(short)[i])
+
+    short = pd.concat(concat2, axis = 0).reset_index(drop = True)
+    total_sort = short.sort_values('order')
+
+    return total_sort.reset_index(drop = True)
+
 #### mirroring dialog_detection
-def mirroring(host1, guest1, period = 350):
+def mirroring(host1, guest1, m_term = 350):
     """
     - 아래 mirroring_matrix 의 내장 함수로 쓰임
     - input : detect_talk_break_length 의 결과값 중 두 개만 pair로 들어감 : 첫 번째로 들어가는 결과값이 host1, 그 다음에 들어가는 결과값이 guest1
     - output : host1의 음성구간 동안 guest1 의 미러링 횟수를 카운팅
 
     """
-
-
     mirror2 = 0
     for i in range(len(get_start_end_times(host1, guest1)[0])):# 호스트 기준으로만 미러링을 센다
         for k in range(len(get_start_end_times(host1, guest1)[1])):
@@ -353,12 +492,12 @@ def mirroring(host1, guest1, period = 350):
             if (get_start_end_times(host1, guest1)[0][i][0] < get_start_end_times(host1, guest1)[1][k][0]) and (get_start_end_times(host1, guest1)[0][i][1] > get_start_end_times(host1, guest1)[1][k][0]):
                 # host의 시작점보다 guset의 끝점 index가 커야함  & host의 끝점보다 guest의 끝점 index가 작아야함
                 if (get_start_end_times(host1, guest1)[0][i][0] < get_start_end_times(host1, guest1)[1][k][1]) and (get_start_end_times(host1, guest1)[0][i][1] > get_start_end_times(host1, guest1)[1][k][1]):
-                    if get_start_end_times(host1, guest1)[1][k][1] - get_start_end_times(host1, guest1)[1][k][0] <= period:
+                    if get_start_end_times(host1, guest1)[1][k][1] - get_start_end_times(host1, guest1)[1][k][0] <= m_term:
                         mirror2 += 1
     return mirror2
 
 # 포루프 돌려야 할 대상 : dialog_len1, dialog_len2, dialog_len3
-def mirroring_matrix(dialog_len_list, n_person, period = 350):
+def mirroring_matrix(dialog_len_list, n_person, m_term = 350):
     """
     input : detect_talk_break_length 결과를 talk1 talk2 talk3 순서 대로 넣어준다.
     output : mirroring 횟수를 나타내는 데이터프레임 출력
@@ -371,6 +510,20 @@ def mirroring_matrix(dialog_len_list, n_person, period = 350):
         # print(pm[0]+1, "->", pm[1]+1)
         np_data[pm] = mirroring(dialog_len_list[pm[0]],\
                                 dialog_len_list[pm[1]],\
-                                period)
+                                m_term)
     mirroring_df =pd.DataFrame(np_data, columns=new_columns, index=new_columns)
     return mirroring_df
+
+### turn taking matrix
+def turn_taking_matrix(only_talk, n_person, dialog_len_list, s_term, tt_term):
+    combi = combi_suspect(only_talk, n_person=n_person)
+    sil_breaker = silence_breaker(only_talk, combi, n_person=n_person, s_term=s_term)
+    s_breaker_df = silence_table(sil_breaker, n_person=n_person)
+    silence_after = table_after(sil_breaker)
+    silence_before = table_before(sil_breaker)
+    detail_result = count_tt_detail(only_talk, dialog_len_list, n_person, tt_term=tt_term)
+    total_turn = [res[2] for res in detail_result]
+    total_short = [res[3] for res in detail_result]
+    ts_df = turn_sequence(total_turn, silence_before, silence_after)
+    ts_short = short_sequence(total_short)
+    return ts_df, ts_short

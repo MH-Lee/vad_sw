@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-# from lightgbm import LGBMClassifier
 from package.smoothing import smoothing
 from package.clf import (logistic_regression,
                          neural_network,

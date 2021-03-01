@@ -10,7 +10,9 @@ from package.dialog_detection import (post_smth,
                                       silence_breaker,
                                       silence_table,
                                       mirroring,
-                                      mirroring_matrix)
+                                      mirroring_matrix,
+                                      turn_taking_matrix,
+                                      )
 from itertools import permutations
 from datetime import datetime
 import warnings
@@ -65,28 +67,25 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
 
     ### silece detect
     combi = combi_suspect(only_talk, n_person=n_person)
-    sil_breaker = silence_breaker(only_talk, combi, n_person=n_person, howlong=s_term)
+    sil_breaker = silence_breaker(only_talk, combi, n_person=n_person, s_term=s_term)
     s_breaker_df = silence_table(sil_breaker, n_person=n_person)
 
     ### mirroring_detection
-    m_matrix = mirroring_matrix(dialog_len_list, n_person, period=m_term)
+    m_matrix = mirroring_matrix(dialog_len_list, n_person, m_term=m_term)
 
+    ### turn taking matrix
+    tt_mat, res_mat = turn_taking_matrix(only_talk, n_person=n_person, dialog_len_list=dialog_len_list, s_term=s_term, tt_term=tt_term)
     # 엑셀 파일 열기 w/ExcelWriter
     writer = pd.ExcelWriter(output_dir + '/{}/{}.xlsx'.format(subdir_name,fname), engine='xlsxwriter')
     # 시트별 데이터 추가하기
+    dd_df.to_excel(writer, sheet_name= 'Prediction result', index=False)
     turn_taking_df.to_excel(writer, sheet_name= 'Count turn taking')
     short_res_df.to_excel(writer, sheet_name= 'Count short response')
     tt_and_short.to_excel(writer, sheet_name= 'Short and turn taking')
-    s_breaker_df.to_excel(writer, sheet_name= 'Count silence breaker')
+    s_breaker_df.to_excel(writer, sheet_name= 'Count silence breaker', index=False)
     m_matrix.to_excel(writer, sheet_name= 'Count mirriring')
+    tt_mat.to_excel(writer, sheet_name= 'turn taking matrix', index=False)
+    res_mat.to_excel(writer, sheet_name= 'response_matrix', index=False)
 
     # 엑셀 파일 저장하기
     writer.save()
-
-# fpath = './data/2p_1(test).csv'
-# output = './results/20210219/'
-# model_name = 'Stacking'
-# tt_term = 300
-# s_term = 300
-# m_term =200
-# final_excecution(fpath, output, model_name, tt_term, s_term, m_term)
