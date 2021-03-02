@@ -21,7 +21,7 @@ warnings.filterwarnings('ignore')
 # df = df[['t1_AMP','t2_AMP']]
 # df.columns = ['x1', 'x2']
 
-fpath = './data/origin_data/12th_short_01.xlsx'
+fpath = './data/origin_data/12th_turn_03.xlsx'
 # fpath = './data/2p_1(test).csv'
 # fpath = './data/2p_6(test).csv'
 # fpath = './data/2p_7(test_4).csv'
@@ -78,7 +78,7 @@ for p in range(1, n_person + 1):
     dialog_len_list.append(dl_temp)
 only_talk = pd.concat(only_talk_list, axis=1)
 only_talk.plot()
-only_talk
+only_talk.apply(sum, axis=1)
 # detail_result
 tt_term = 200
 turn_taking_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='turn_taking')
@@ -88,6 +88,14 @@ tt_and_short = turn_taking_df + short_res_df
 turn_taking_df
 short_res_df
 tt_and_short
+
+combi = combi_suspect(only_talk, n_person=3)
+sil_breaker = silence_breaker(only_talk, combi, n_person=3, s_term=s_term)
+
+sil_breaker[0]
+sil_breaker[1]
+
+silence_table(sil_breaker, n_person=n_person)
 
 from package.dialog_detection import (table_after,
                                       table_before,
