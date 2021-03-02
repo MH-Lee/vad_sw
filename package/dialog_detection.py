@@ -99,25 +99,50 @@ def get_start_end_times(dialog_len_host, dialog_len_guest):
     """
     start = 0
     start_end = []
-    for i in range(len(dialog_len_host)-1):
-        start += abs(dialog_len_host[i])
-        if dialog_len_host[i] < 0: # a: host 음성구간 시작 인덱스, b : host 음성구간 끝 인덱스
-            a = start
-            b = (start + abs(dialog_len_host[i + 1]) - 1)
-            start_end.append([a,b])
+    if dialog_len_host[-1] < 0 : # 마지막 구간이 침묵 구간이라면
+        for i in range(len(dialog_len_host) -1):
+            start += abs(dialog_len_host[i])
+            if dialog_len_host[i] < 0: # a: host 음성구간 시작 인덱스, b : host 음성구간 끝 인덱스
+                a = start
+                b = (start + abs(dialog_len_host[i + 1]) - 1)
+                start_end.append([a,b])
+    else: # 마지막 구간이 발화 구간이라면 모든 원소에 인덱싱을 해야함
+        for i in range(len(dialog_len_host)):
+            start += abs(dialog_len_host[i])
+            if dialog_len_host[i] < 0: # a: host 음성구간 시작 인덱스, b : host 음성구간 끝 인덱스
+                a = start
+                b = (start + abs(dialog_len_host[i + 1]) - 1)
+                start_end.append([a,b])
+
 
     start2 = 0
     start_end2 = []
     guest_talk_times = []
-    for i in range(len(dialog_len_guest)-1):
-        start2 += abs(dialog_len_guest[i])
-        if dialog_len_guest[i] < 0: # c: guest 음성구간 시작 인덱스, d : guest 음성구간 끝 인덱스
-            c = start2
-            d = (start2 + abs(dialog_len_guest[i + 1]) - 1)
-            start_end2.append([c,d])
+    if dialog_len_guest[-1] < 0 : # 마지막 구간이 침묵 구간이라면
 
-        else:
-            guest_talk_times.append(dialog_len_guest[i])
+        for i in range(len(dialog_len_guest)-1):  ##-1한것을 제거함
+            start2 += abs(dialog_len_guest[i])
+            if dialog_len_guest[i] < 0: # c: guest 음성구간 시작 인덱스, d : guest 음성구간 끝 인덱스
+                c = start2
+                d = (start2 + abs(dialog_len_guest[i + 1]) - 1)
+                start_end2.append([c,d])
+
+            else:
+                guest_talk_times.append(dialog_len_guest[i])
+
+    #######
+    else:      # 마지막 구간이 발화 구간이라면
+        for i in range(len(dialog_len_guest)):  ##-1한것을 제거함
+            start2 += abs(dialog_len_guest[i])
+            if dialog_len_guest[i] < 0: # c: guest 음성구간 시작 인덱스, d : guest 음성구간 끝 인덱스
+                c = start2
+                d = (start2 + abs(dialog_len_guest[i + 1]) - 1)
+                start_end2.append([c,d])
+
+            else:
+                #print(dialog_len_guest[i])
+                guest_talk_times.append(dialog_len_guest[i])
+
 
     return start_end, start_end2, guest_talk_times
 
@@ -148,6 +173,8 @@ def count_turn_takes(only_talk, host_number, guest_number, host_start_end, guest
     response_matrix = {str(host_number+1) + '->' + str(guest_number+1) + ' start': []}
     columns2 = list(response_matrix)
     ######
+    # print("host : ", host_number)
+    # print("guest: ", guest_number)
     for i in range(len(host_start_end)):
         k = 0    #i 는 host의 인덱스, k는 guest의 인덱스
         while k<=len(guest_start_end)-1 and guest_start_end[k][0] < host_start_end[i][1]:   #k +=1 결과가 len(guest_start_end)보다는 작거나 같아야 한다.  AND guest 의 시작점이 host의 끝점 인덱스보다 작은 경우에는 k에 +1 을 하여, guest_start_end 결과의 그 다음 인덱스로 넘어가도록 한다.
@@ -161,6 +188,8 @@ def count_turn_takes(only_talk, host_number, guest_number, host_start_end, guest
                 if dup(only_talk.iloc[int(guest_start_end[k][0]): int(guest_start_end[k][1])+1, host_number]) <= 500:
                     ### host의 말길이도 300 이상이어야함
                     if host_start_end[i][1] - host_start_end[i][0] > 300:
+                        # print(guest_talk_times1)
+                        # print(k)
                         if guest_talk_times1[k] <= howlong:
                             short_responses += 1
                             change.append(k)
@@ -281,9 +310,13 @@ def silence_breaker(df, combi, n_person, s_term=300):
     after_silence_person = []
     before_silence_person =[]
 
-    after_silence = []
     before_silence = []
 
+    ##추가
+    start_break_idx = []
+    end_break_idx = []
+    idx_pair = []
+    ##
     select_columns = ['talk{}'.format(i) for i in range(1, n_person+1)]
     for i, value in enumerate(comb_silence_values):
         if(comb_silence_values[i,0] == 0):
@@ -298,38 +331,64 @@ def silence_breaker(df, combi, n_person, s_term=300):
 
                 # 가장 처음 발생한 breaker는 silence breaker가 아니라, 단순히 처음 대화를 시작한 경우일 뿐이므로 제외
                 if len(np.where(til_break_df['sum'] != -1*int(n_person))[0]) >= 2:
-                    after_silence.append(break_idx) # 침묵이 300 이상 진행 되었을때, 그것이 깨진 행을 append한다.
+                    ## 최신_추가##
+                    # breaker가 말한 구간의 시작 행
+                    start_break_idx.append(break_idx)
+                    # breaker가 말한 구간의 마지막 행
+                    end_break = comb_silence_values[i,0] - 1
+                    end_break_idx.append(end_break)
                     ###########추가한 부분#############################
                     acc_idx = abs(comb_silence_values[i-1,1] + 1)
                     real_idx = comb_silence_values[i-1,0] - acc_idx - 1
-                    print()
                     before_silence.append(real_idx)
                     ###################################################
-    ############추가
-    print(len(after_silence))
-    # 침묵 직후에 누가 말했나?
-    for vv in after_silence:
-        row = list()
-        for c in select_columns:
-            row.append(df[c][vv])
-        row1 = [ias for ias, r in enumerate(row) if r == 1.0]
-        row1_value = int(str(row1)[1:-1])
-        after_silence_person.append([vv,row1_value]) #### [breaker 인덱스, breaker person]
+    ## 최신 추가####################################################
+    # 1) 따로 구분 되어있는 start_break_idx, end_break_idx 리스트의 원소를 순서쌍으로 하는 리스트를 만든다.
+    # idx_pair = [[start_break[0], end_break[0]], [start_break[1], end_break[1]], [start_break[2], end_break[2]]....]
+    for i, v in enumerate(start_break_idx):
+        #breaker의 마지막 행의 인덱스
+        idx = end_break_idx[i]
+        #[breaker의 첫 행 인덱스/ breaker의 마지막 행의 인덱스] 순서쌍
+        idx_pair.append([v, idx])
+
+    print(idx_pair)
+    if len(idx_pair) == 0:
+        after_silence_person = []
+    else:
+        for i in idx_pair:
+            row = list()
+            for c in select_columns:
+                row.append(df[c][i[0]])
+            row1 = [i for i in range(len(row)) if row[i] == 1.0] ## ex. [-1, 1, 1] 중에서 1,1에 대응되는 person을 구해라
+            if len(row1) == 1: # a) breaker가 한 명일 때는 그 인덱스를 바로 반환
+                row1_value = int(str(row1)[1:-1])
+                after_silence_person.append([i[0],row1_value]) #### [breaker 첫 행 인덱스, breaker person 인덱스]
+            else:
+                # b) breaker가 두 명 이상일 때는 가장 많이 말한 경우만 반환
+                person = list()
+                for c_idx in range(len(select_columns)):
+                    person.append(df[i[0]:i[1]].sum()[c_idx])
+                # only_talk의 person 별로 [start_break], [end_break] 인덱스 구간에서의 1 or -1 모두 더한 값이 가장 클 때, 말을 가장 많이함
+                max_idx = [i for i in range(len(person)) if max(person) == person[i]]
+                after_silence_person.append([i[0], max_idx]) #### [start_breaker, 가장 많이 말한 person의 인덱스]
 
     ############추가
     # 침묵 직전에 누가 말했나?
+    # before_silence = 침묵 직전에 누군가가 말을 한 행의 인덱스를 모두 어팬드한 리스트
     print(len(before_silence))
     if len(before_silence) == 0:
         before_silence_person = []
     else:
-        for j in before_silence:
-            # row = [df['talk1'][j],df['talk2'][j], df['talk3'][j]]  #
+        for k, j in enumerate(before_silence):
             row_s = list()
             for c in select_columns:
+                # print("j : ", j)
+                # print("append : ", df[c][j])
                 row_s.append(df[c][j])
-            row_s1 = [ibs for ibs, rs in enumerate(row) if rs == 1.0]
-            row_s1_value = int(str(row_s1)[1:-1])
-            before_silence_person.append([j, row_s1_value]) ### [before silence 인덱스, person]
+                # print("columns : ", c)
+            row_s1 = [i for i in range(len(row)) if row[i] == 1.0]
+            ## 침묵 직전에 발언한 사람이 2명이고 그 행이 153 --> [153, [0,1]]
+            before_silence_person.append([j, row_s1])
     return before_silence_person, after_silence_person
 
 def silence_table(whois, n_person):
@@ -344,6 +403,7 @@ def silence_table(whois, n_person):
         return pd.DataFrame()
     else:
         z = list(np.array(whois[1])[:,1])
+        print("z:", z)
     df = pd.DataFrame.from_dict(Counter(z), orient='index').reset_index()
     df.columns = ['person', 'interruption']
     df.sort_values(by='person', ascending=True, inplace = True)
@@ -353,28 +413,6 @@ def silence_table(whois, n_person):
     return df_final.reset_index(drop=True)
 
 #### add
-def compare1(x):
-    """
-    - 밑의 table_before 함수의 함수로 쓰임
-    """
-    if x == 0:
-        return '1->silence'
-    elif x ==1:
-        return '2->silence'
-    else:
-        return '3->silence'
-
-def compare2(x):
-    """
-     - 밑의 table_after 함수의 함수로 쓰임
-    """
-    if x == 0:
-        return 'silence->1'
-    elif x ==1:
-        return 'silence->2'
-    else:
-        return 'silence->3'
-
 def table_before(breaker_result):
     """
     - input : breaker함수의 결과값. ex. breaker(combi_suspect(df), 400)
@@ -385,10 +423,18 @@ def table_before(breaker_result):
     if len(breaker_result[0]) == 0:
         before_s = pd.DataFrame()
     else:
-        before_s = pd.DataFrame(breaker_result[0])
-        before_s.columns = ['order', 'person']
-        add = before_s['person'].apply(compare1)
-        before_s = pd.concat([before_s['order'], add], axis = 1)
+        texts = []
+        before = pd.DataFrame(breaker_result[0])
+        for i, v in enumerate(before.iloc[:,1]):
+            person_idx = [x+1 for x in v]
+            # print(person_idx)
+            text = str(person_idx)[1:-1] + "->silence"
+            # print(text)
+            texts.append(text)
+
+        before['person'] = texts
+        before.rename(columns = {0 : 'order'}, inplace = True)
+        before_s = pd.concat([before['order'], before['person']], axis = 1)
     return before_s
 
 def table_after(breaker_result):
@@ -401,10 +447,18 @@ def table_after(breaker_result):
     if len(breaker_result[1]) == 0:
         after_s = pd.DataFrame()
     else:
-        after_s = pd.DataFrame(breaker_result[1])
-        after_s.columns = ['order', 'person']
-        add = after_s['person'].apply(compare2)
-        after_s = pd.concat([after_s['order'], add], axis = 1)
+        texts = []
+        after = pd.DataFrame(breaker_result[1])
+        for i, v in enumerate(after.iloc[:, 1]):
+            person_idx = v + 1
+            #print(person_idx)
+            text = "silence->" + str(person_idx)
+            #print(text)
+            texts.append(text)
+
+        after['person'] = texts
+        after.rename(columns = {0:'order'}, inplace = True)
+        after_s = pd.concat([after['order'], after['person']], axis = 1)
     return after_s
 
 ### turn_taking matrix

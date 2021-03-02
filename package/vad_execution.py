@@ -13,6 +13,7 @@ from package.dialog_detection import (post_smth,
                                       mirroring_matrix,
                                       turn_taking_matrix,
                                       )
+import matplotlib.pyplot as plt
 from itertools import permutations
 from datetime import datetime
 import warnings
@@ -59,7 +60,9 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
         dl_temp = detect_talk_break_length(new_df['talk{}'.format(p)])
         dialog_len_list.append(dl_temp)
     only_talk = pd.concat(only_talk_list, axis=1)
-
+    only_talk.plot()
+    only_talk_plot = fname + '_talk_plot'
+    plt.savefig(output_dir + '/{}/img/{}.jpg'.format(subdir_name, only_talk_plot))
     ### Turn taking matrix
     turn_taking_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='turn_taking')
     short_res_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='short_res')

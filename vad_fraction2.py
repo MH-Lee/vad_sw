@@ -17,14 +17,11 @@ import warnings
 import os
 warnings.filterwarnings('ignore')
 
-
-len([])
-
 # df = pd.read_csv('./data/2p_1(test).csv')
 # df = df[['t1_AMP','t2_AMP']]
 # df.columns = ['x1', 'x2']
 
-fpath = './data/3p_1(test).csv'
+fpath = './data/origin_data/12th_short_01.xlsx'
 # fpath = './data/2p_1(test).csv'
 # fpath = './data/2p_6(test).csv'
 # fpath = './data/2p_7(test_4).csv'
@@ -37,6 +34,7 @@ m_term = 300
 fname = os.path.basename(fpath).split('.')[0]
 file_extension = os.path.basename(fpath).split('.')[1]
 
+os.getcwd()
 if file_extension == 'csv':
     df = pd.read_csv(fpath)
 else:
@@ -49,7 +47,6 @@ df_new_columns = ['x{}'.format(i) for i in range(1, n_person+1)]
 df = df[df_columns]
 df.columns = df_new_columns
 
-df
 # if n_person == 3:
 #     df = df[['t1_AMP','t2_AMP', 't3_AMP']]
 #     df.columns = ['x1', 'x2', 'x3']
@@ -66,14 +63,13 @@ pred_df_concat = vad_predict(df, output_dir, n_person=n_person, img_name=fname, 
 # replace 0s to -1s for future break count algorithm
 
 dd_df = pred_df_concat.copy()
-dd_df.columns
-dd_df = pd.read_csv('./data/3_prediction_for_check.csv')
 dd_df.columns = ['person_1', 'talking_1', 'person_2', 'talking_2', 'person_3', 'talking_3']
 for p in range(1, n_person+1):
     dd_df['talk{}'.format(p)] = dd_df['talking_{}'.format(p)].replace(0,-1)
 
 ### remove outlier (-1,-1,-1,-1,-1,-1)
 new_df = post_smth(dd_df, n_person=n_person)
+new_df.to_csv('error_data.csv', index=False)
 only_talk_list = list()
 dialog_len_list = list()
 for p in range(1, n_person + 1):
@@ -81,9 +77,10 @@ for p in range(1, n_person + 1):
     dl_temp = detect_talk_break_length(new_df['talk{}'.format(p)])
     dialog_len_list.append(dl_temp)
 only_talk = pd.concat(only_talk_list, axis=1)
-
+only_talk.plot()
+only_talk
 # detail_result
-tt_term = 300
+tt_term = 200
 turn_taking_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='turn_taking')
 short_res_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='short_res')
 tt_and_short = turn_taking_df + short_res_df
@@ -101,7 +98,7 @@ from package.dialog_detection import (table_after,
 
 def turn_taking_matrix(only_talk, n_person, dialog_len_list, s_term, tt_term):
     combi = combi_suspect(only_talk, n_person=n_person)
-    sil_breaker = silence_breaker(only_talk, combi, n_person=n_person, howlong=s_term)
+    sil_breaker = silence_breaker(only_talk, combi, n_person=n_person, s_term=s_term)
     s_breaker_df = silence_table(sil_breaker, n_person=n_person)
     silence_after = table_after(sil_breaker)
     silence_before = table_before(sil_breaker)
@@ -118,7 +115,7 @@ ts_df
 
 ts_short
 
-mirroring_matrix(dialog_len_list, n_person, period=m_term)
+mirroring_matrix(dialog_len_list, n_person, m_term=m_term)
 from datetime import datetime
 
 today = datetime.today()

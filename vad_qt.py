@@ -181,6 +181,7 @@ class VadSW(QWidget):
         print("person number : ", self.person_mode)
         print("output_dir : ", self.output_dir)
         for idx, fname in enumerate(self.filename):
+            print(fname)
             final_excecution(fname,\
                              self.output_dir,\
                              self.model_name,\
