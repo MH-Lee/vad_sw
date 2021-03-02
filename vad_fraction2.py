@@ -89,6 +89,8 @@ turn_taking_df
 short_res_df
 tt_and_short
 
+select_columns = ['talk{}'.format(i) for i in range(1, n_person+1)]
+select_columns
 combi = combi_suspect(only_talk, n_person=3)
 sil_breaker = silence_breaker(only_talk, combi, n_person=3, s_term=s_term)
 

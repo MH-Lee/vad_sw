@@ -310,6 +310,7 @@ def silence_breaker(df, combi, n_person, s_term=300):
     after_silence_person = []
     before_silence_person =[]
 
+    after_silence = []
     before_silence = []
 
     ##추가
@@ -327,13 +328,13 @@ def silence_breaker(df, combi, n_person, s_term=300):
 
 
                 break_idx = comb_silence_values[i-1,0] + 1 # 침묵을 깬 사람이 발생한 row의 index
-                til_break_df = df[:break_idx + 1].loc[:, select_columns] # 첫 row 부터 침묵을 깬 row 까지 데이터프레임 슬라이스
+                til_break_df = df[:break_idx + 1].loc[:,('talk1', 'talk2', 'talk3')] # 첫 row 부터 침묵을 깬 row 까지 데이터프레임 슬라이스
                 # 만일 til_break_df 에서 row의 원소들의 총합이 -3이 아닌 경우가 단 하나만 있다면, 해당 break_idx는 밑에서 어팬드 하지 않고 pass
-                til_break_df['sum'] = til_break_df.apply(sum, axis=1)
+                til_break_df['sum'] = til_break_df.apply(lambda row: row.talk1 + row.talk2 + row.talk3, axis = 1)
 
 
                 # 가장 처음 발생한 breaker는 silence breaker가 아니라, 단순히 처음 대화를 시작한 경우일 뿐이므로 제외
-                if len(np.where(til_break_df['sum'] != -1*n_person)[0]) >= 2:
+                if len(np.where(til_break_df['sum'] != -3)[0]) >= 2:
 
                     ## 최신_추가##
                     start_break_idx.append(break_idx) # breaker가 말한 구간의 시작 행
@@ -356,38 +357,33 @@ def silence_breaker(df, combi, n_person, s_term=300):
     ## 최신 추가####################################################
     # 1) 따로 구분 되어있는 start_break_idx, end_break_idx 리스트의 원소를 순서쌍으로 하는 리스트를 만든다.
     # idx_pair = [[start_break[0], end_break[0]], [start_break[1], end_break[1]], [start_break[2], end_break[2]]....]
-    for idx, v in enumerate(start_break_idx):
-        end_idx = end_break_idx[idx] #breaker의 마지막 행의 인덱스
+    for i, v in enumerate(start_break_idx):
+        idx = end_break_idx[i] #breaker의 마지막 행의 인덱스
         #print([v, idx])
-        idx_pair.append([v, end_idx]) #[breaker의 첫 행 인덱스/ breaker의 마지막 행의 인덱스] 순서쌍
+        idx_pair.append([v, idx]) #[breaker의 첫 행 인덱스/ breaker의 마지막 행의 인덱스] 순서쌍
 
     for i in idx_pair:
-        row = list()
-        for c in select_columns:
-            row.append(df[c][i[0]]) #[df['talk1'][i[0]],df['talk2'][i[0]], df['talk3'][i[0]]]
-        row1 = [r for r in range(len(row)) if row[r] == 1.0] ## ex. [-1, 1, 1] 중에서 1,1에 대응되는 person을 구해라
+        row = [df['talk1'][i[0]],df['talk2'][i[0]], df['talk3'][i[0]]]
+        row1 = [i for i in range(len(row)) if row[i] == 1.0] ## ex. [-1, 1, 1] 중에서 1,1에 대응되는 person을 구해라
         if len(row1) == 1: # a) breaker가 한 명일 때는 그 인덱스를 바로 반환
             row1_value = int(str(row1)[1:-1])
             after_silence_person.append([i[0],row1_value]) #### [breaker 첫 행 인덱스, breaker person 인덱스]
         else:
             # b) breaker가 두 명 이상일 때는 가장 많이 말한 경우만 반환
-            person = list()
-            for n_per in range(n_person):
-                person.append(df[i[0]:i[1]].sum()[n_per]) # = [only_talk[i[0]:i[1]].sum()[0], only_talk[i[0]:i[1]].sum()[1], only_talk[i[0]:i[1]].sum()[2]]
+            person = [df[i[0]:i[1]].sum()[0], df[i[0]:i[1]].sum()[1], df[i[0]:i[1]].sum()[2]]
             # only_talk의 person 별로 [start_break], [end_break] 인덱스 구간에서의 1 or -1 모두 더한 값이 가장 클 때, 말을 가장 많이함
-            max_idx = [j for j in range(len(person)) if max(person) == person[j]][0]
+            max_idx = [i for i in range(len(person)) if max(person) == person[i]][0]
             after_silence_person.append([i[0], max_idx]) #### [start_breaker, 가장 많이 말한 person의 인덱스]
 
 
     ####최신_추가#########################################################
     # 침묵 직전에 누가 말했나? : 침묵 직전에 2명 이상이 말했을 수 있으므로, 해당하는 모든 인덱스 반환하도록 수정
     # before_silence = 침묵 직전에 누군가가 말을 한 행의 인덱스를 모두 어팬드한 리스트
-    for bs in before_silence:
-        row_bs = list()
-        for c in select_columns:
-            row_bs.append(df[c][bs]) #=[df['talk1'][j],df['talk2'][j], df['talk3'][j]]  #
-        row1 = [k for k in range(len(row)) if row[k] == 1.0]
-        before_silence_person.append([bs, row1]) ## 침묵 직전에 발언한 사람이 2명이고 그 행이 153 --> [153, [0,1]]
+    for k, j in enumerate(before_silence):
+        row = [df['talk1'][j],df['talk2'][j], df['talk3'][j]]  #
+        row1 = [i for i in range(len(row)) if row[i] == 1.0]
+        before_silence_person.append([j, row1]) ## 침묵 직전에 발언한 사람이 2명이고 그 행이 153 --> [153, [0,1]]
+
     return before_silence_person, after_silence_person
 
 def silence_table(whois, n_person):
