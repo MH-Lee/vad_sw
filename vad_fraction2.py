@@ -78,7 +78,7 @@ for p in range(1, n_person + 1):
     dialog_len_list.append(dl_temp)
 only_talk = pd.concat(only_talk_list, axis=1)
 only_talk.plot()
-only_talk.apply(sum, axis=1)
+only_talk[select_columns].sum(axis=1)
 # detail_result
 tt_term = 200
 turn_taking_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='turn_taking')
