@@ -85,12 +85,12 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     turn_taking_df.to_excel(writer, sheet_name= 'Count turn taking')
     short_res_df.to_excel(writer, sheet_name= 'Count short response')
     tt_and_short.to_excel(writer, sheet_name= 'Short and turn taking')
+    m_matrix.to_excel(writer, sheet_name= 'Count mirroring')
     s_breaker_df.to_excel(writer, sheet_name= 'Count silence breaker', index=False)
+    res_mat.to_excel(writer, sheet_name= 'response_matrix', index=False)
     silence_after.to_excel(writer, sheet_name= 'After silence breaker', index=False)
     silence_before .to_excel(writer, sheet_name= 'Before silence breaker', index=False)
-    m_matrix.to_excel(writer, sheet_name= 'Count mirriring')
     tt_mat.to_excel(writer, sheet_name= 'turn taking matrix', index=False)
-    res_mat.to_excel(writer, sheet_name= 'response_matrix', index=False)
 
     # 엑셀 파일 저장하기
     writer.save()
