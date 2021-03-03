@@ -59,7 +59,7 @@ class VadSW(QWidget):
 
         self.setLayout(layout)
         self.setGeometry(900, 200, 400, 300)
-        self.setWindowTitle("VAD sw v0.5")
+        self.setWindowTitle("VAD sw v1.0")
         self.show()
 
     def pushButtonClicked(self):

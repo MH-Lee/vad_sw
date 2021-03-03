@@ -583,4 +583,4 @@ def turn_taking_matrix(only_talk, n_person, dialog_len_list, s_term, tt_term):
     total_short = [res[3] for res in detail_result]
     ts_df = turn_sequence(total_turn, silence_before, silence_after)
     ts_short = short_sequence(total_short)
-    return ts_df, ts_short
+    return ts_df, ts_short, silence_after, silence_before

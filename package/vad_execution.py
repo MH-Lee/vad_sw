@@ -60,7 +60,7 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
         dl_temp = detect_talk_break_length(new_df['talk{}'.format(p)])
         dialog_len_list.append(dl_temp)
     only_talk = pd.concat(only_talk_list, axis=1)
-    only_talk.plot()
+    only_talk.plot(figsize=(40,10))
     only_talk_plot = fname + '_talk_plot'
     plt.savefig(output_dir + '/{}/img/{}.jpg'.format(subdir_name, only_talk_plot))
     ### Turn taking matrix
@@ -77,7 +77,7 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     m_matrix = mirroring_matrix(dialog_len_list, n_person, m_term=m_term)
 
     ### turn taking matrix
-    tt_mat, res_mat = turn_taking_matrix(only_talk, n_person=n_person, dialog_len_list=dialog_len_list, s_term=s_term, tt_term=tt_term)
+    tt_mat, res_mat, silence_after, silence_before = turn_taking_matrix(only_talk, n_person=n_person, dialog_len_list=dialog_len_list, s_term=s_term, tt_term=tt_term)
     # 엑셀 파일 열기 w/ExcelWriter
     writer = pd.ExcelWriter(output_dir + '/{}/{}.xlsx'.format(subdir_name,fname), engine='xlsxwriter')
     # 시트별 데이터 추가하기
@@ -86,6 +86,8 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     short_res_df.to_excel(writer, sheet_name= 'Count short response')
     tt_and_short.to_excel(writer, sheet_name= 'Short and turn taking')
     s_breaker_df.to_excel(writer, sheet_name= 'Count silence breaker', index=False)
+    silence_after.to_excel(writer, sheet_name= 'before silence breaker', index=False)
+    silence_before .to_excel(writer, sheet_name= 'after silence breaker', index=False)
     m_matrix.to_excel(writer, sheet_name= 'Count mirriring')
     tt_mat.to_excel(writer, sheet_name= 'turn taking matrix', index=False)
     res_mat.to_excel(writer, sheet_name= 'response_matrix', index=False)

@@ -21,7 +21,7 @@ warnings.filterwarnings('ignore')
 # df = df[['t1_AMP','t2_AMP']]
 # df.columns = ['x1', 'x2']
 
-fpath = './data/origin_data/12th_turn_03.xlsx'
+fpath = './data/origin_data/4th_turn_01.xlsx'
 # fpath = './data/2p_1(test).csv'
 # fpath = './data/2p_6(test).csv'
 # fpath = './data/2p_7(test_4).csv'
@@ -77,10 +77,9 @@ for p in range(1, n_person + 1):
     dl_temp = detect_talk_break_length(new_df['talk{}'.format(p)])
     dialog_len_list.append(dl_temp)
 only_talk = pd.concat(only_talk_list, axis=1)
-only_talk.plot()
-only_talk[select_columns].sum(axis=1)
+only_talk.plot(figsize=(40,10))
+
 # detail_result
-tt_term = 200
 turn_taking_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='turn_taking')
 short_res_df = make_turn_taking_df(only_talk, dialog_len_list, n_person, tt_term=tt_term, mode='short_res')
 tt_and_short = turn_taking_df + short_res_df
@@ -117,14 +116,15 @@ def turn_taking_matrix(only_talk, n_person, dialog_len_list, s_term, tt_term):
     total_short = [res[3] for res in detail_result]
     ts_df = turn_sequence(total_turn, silence_before, silence_after)
     ts_short = short_sequence(total_short)
-    return ts_df, ts_short
+    return ts_df, ts_short, silence_after, silence_before
 
 
-ts_df, ts_short = turn_taking_matrix(only_talk, 3, dialog_len_list, s_term=400, tt_term=300)
+ts_df, ts_short, silence_after, silence_before = turn_taking_matrix(only_talk, 3, dialog_len_list, s_term=300, tt_term=300)
 ts_df
 
 ts_short
-
+silence_before
+silence_after
 mirroring_matrix(dialog_len_list, n_person, m_term=m_term)
 from datetime import datetime
 
