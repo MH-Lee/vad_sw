@@ -272,7 +272,6 @@ def combi_suspect(df, n_person):
 
     pd_silence = pd.DataFrame(silent_times.copy())
     pd_silence.columns = ['idx']
-    pd_silence
 
     # silence 옆에 추가할, -1 accumulation 한 column 생성
     acc = []
@@ -305,7 +304,7 @@ def silence_breaker(df, combi, n_person, s_term=300):
     - person index : person1 --> 0, person2 --> 1, person3 -->2
 
     """
-    print("n_person : ", n_person)
+    # print("n_person : ", n_person)
     comb_silence_values = combi.values
 
     after_silence_person = []
@@ -406,7 +405,7 @@ def silence_table(whois, n_person):
         return pd.DataFrame()
     else:
         z = list(np.array(whois[1])[:,1])
-        print("z:", z)
+        # print("z:", z)
     df = pd.DataFrame.from_dict(Counter(z), orient='index').reset_index()
     df.columns = ['person', 'interruption']
     df.sort_values(by='person', ascending=True, inplace = True)
