@@ -1,4 +1,6 @@
 echo "$USER"
-cd /Users/$USER/Desktop/VAD_SW
-source  ./vad_venv/bin/activate
+cd "$(dirname "$0")"
+echo $PWD
+source ./vad_venv/bin/activate
+python -V
 python vad_qt.py
