@@ -19,7 +19,7 @@ def plot_graph(origin, sm_pred, a=0, b=None, save_dir=None, img_name=None):
     plt.figure(figsize=(40,10))
     plt.plot(origin.loc[a:b], color='tab:red')
     plt.plot(sm_pred.loc[a:b], color='tab:blue')
-    plt.legend(['Signal', 'Predict'])
+    plt.legend(['Signal', 'Predict'], fontsize=15, loc=2)
     if save_dir is not None:
         plt.savefig(save_dir + '/img/{}.jpg'.format(img_name))
     else:

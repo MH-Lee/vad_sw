@@ -61,6 +61,7 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
         dialog_len_list.append(dl_temp)
     only_talk = pd.concat(only_talk_list, axis=1)
     only_talk.plot(figsize=(40,10))
+    plt.legend(fontsize=25, loc=2)
     only_talk_plot = fname + '_talk_plot'
     plt.savefig(output_dir + '/{}/img/{}.jpg'.format(subdir_name, only_talk_plot))
     ### Turn taking matrix
