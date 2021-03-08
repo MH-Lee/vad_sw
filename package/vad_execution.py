@@ -37,7 +37,8 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
         df = pd.read_excel(fpath)
 
     n_person = df.shape[1]
-    df_columns = ['t{}_AMP'.format(i) for i in range(1, n_person+1)]
+    # df_columns = ['t{}_AMP'.format(i) for i in range(1, n_person+1)]
+    df_columns = df.columns
     df_new_columns = ['x{}'.format(i) for i in range(1, n_person+1)]
     df = df[df_columns]
     df.columns = df_new_columns
@@ -82,7 +83,7 @@ def final_excecution(fpath, output_dir, model_name, tt_term, s_term, m_term):
     # 엑셀 파일 열기 w/ExcelWriter
     writer = pd.ExcelWriter(output_dir + '/{}/{}.xlsx'.format(subdir_name,fname), engine='xlsxwriter')
     # 시트별 데이터 추가하기
-    dd_df.to_excel(writer, sheet_name= 'Prediction result', index=False)
+    pred_df_concat.to_excel(writer, sheet_name= 'Prediction result', index=False)
     turn_taking_df.to_excel(writer, sheet_name= 'Count turn taking')
     short_res_df.to_excel(writer, sheet_name= 'Count short response')
     tt_and_short.to_excel(writer, sheet_name= 'Short and turn taking')
